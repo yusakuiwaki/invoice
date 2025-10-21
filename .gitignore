@@ -1,0 +1,47 @@
+# Node / package managers
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Next.js
+.next/
+out/
+.vercel/
+
+# Env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Editors/IDE
+.vscode/
+.idea/
+
+# Tests/Build cache
+coverage/
+dist/
+tmp/
+.temp/
+.cache/
+.turbo/
+
+# Local data storage (dev only)
+data/uploads/
+!data/.gitkeep
+
