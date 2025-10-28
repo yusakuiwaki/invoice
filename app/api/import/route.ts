@@ -71,11 +71,21 @@ export async function POST(req: Request) {
 
     // Create mock extracted data. Optionally tweak per filename.
     const base = defaultMockData();
+    // Start with mock values, then clear the user-input-only fields to enforce manual entry
     const data: InvoiceData = {
       ...base,
       payeeName: base.payeeName || file.name.split('.')[0],
+      reporterName: '',
+      productType: '',
+      withholdingTaxConfirmed: false,
+      originCountry: '',
+      shippingPorts: '',
+      countryName: '',
+      notNKIran: false,
+      notSanctioned: false,
     };
-    const errors = validate(data);
+    // Do not populate initial errors; validation will occur on user edits / export
+    const errors: string[] = [];
     items.push({ id: hash, filename: file.name, data, errors });
   }
 

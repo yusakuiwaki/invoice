@@ -4,7 +4,7 @@ export type InvoiceData = {
   amount: string; // keep as string for easy input
   payeeCountry: string;
   payeeName: string;
-  productType: '直貿' | '間貿';
+  productType: '' | '直貿' | '間貿';
   productAmount: string;
   withholdingTaxConfirmed: boolean;
   goodsDescription: string;

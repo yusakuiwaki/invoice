@@ -65,33 +65,57 @@ export default function Page() {
     e.stopPropagation();
   }, []);
 
+  const validateClient = useCallback((data: InvoiceData): string[] => {
+    const errors: string[] = [];
+    // 入力必須群（ユーザー入力のみ）
+    if (!data.reporterName.trim()) errors.push('報告者氏名は必須です');
+    if (!data.productType) errors.push('①商品代の区分（直貿/間貿）は必須です');
+    if (!data.originCountry.trim()) errors.push('原産地は必須です');
+    if (!data.shippingPorts.trim()) errors.push('船積地は必須です');
+    if (!data.countryName.trim()) errors.push('国名は必須です');
+    if (!data.withholdingTaxConfirmed)
+      errors.push('人事グループへの確認（源泉所得税）はチェックが必要です');
+    if (!data.notNKIran) errors.push('北朝鮮およびイラン関連ではない確認はチェックが必要です');
+    if (!data.notSanctioned) errors.push('制裁・送金規制対象に該当しない確認はチェックが必要です');
+
+    // 既存の基本検証（UIの入力ガイドとして継続）
+    if (!/^[A-Z]{3}$/.test(data.currency.trim())) errors.push('通貨は3文字の通貨コード');
+    if (!/^[-0-9.,]+$/.test(data.amount.trim())) errors.push('金額は数値形式で入力');
+    if (!data.payeeCountry.trim()) errors.push('支払先国は必須です');
+    if (!data.payeeName.trim()) errors.push('支払先(会社名)は必須です');
+    if (!/^[-0-9.,]+$/.test(data.productAmount.trim())) errors.push('金額(①商品代)は数値形式で入力');
+    if (!data.goodsDescription.trim()) errors.push('輸入貨物名称は必須です');
+    return errors;
+  }, []);
+
   const update = useCallback(
     (patch: Partial<InvoiceData>) => {
       setItems((prev) => {
         const next = [...prev];
         const item = { ...next[selected] };
         item.data = { ...item.data, ...patch };
-        // Simple client-side validation mirroring server
-        const errors: string[] = [];
-        if (!item.data.reporterName.trim()) errors.push('報告者氏名は必須です');
-        if (!/^[A-Z]{3}$/.test(item.data.currency.trim())) errors.push('通貨は3文字の通貨コード');
-        if (!/^[-0-9.,]+$/.test(item.data.amount.trim())) errors.push('金額は数値形式で入力');
-        if (!item.data.payeeCountry.trim()) errors.push('支払先国は必須です');
-        if (!item.data.payeeName.trim()) errors.push('支払先(会社名)は必須です');
-        if (!/^[-0-9.,]+$/.test(item.data.productAmount.trim())) errors.push('金額(①商品代)は数値形式で入力');
-        if (!item.data.goodsDescription.trim()) errors.push('輸入貨物名称は必須です');
-        if (!item.data.originCountry.trim()) errors.push('原産地は必須です');
-        if (!item.data.countryName.trim()) errors.push('国名は必須です');
-        item.errors = errors;
+        item.errors = validateClient(item.data);
         next[selected] = item;
         return next;
       });
     },
-    [selected]
+    [selected, validateClient]
   );
 
   const exportExcel = useCallback(async () => {
     if (!selectedItem) return;
+    // 事前バリデーション（未入力があればエラー表示して中断）
+    const currentErrors = validateClient(selectedItem.data);
+    if (currentErrors.length > 0) {
+      setItems((prev) => {
+        const next = [...prev];
+        const item = { ...next[selected] };
+        item.errors = currentErrors;
+        next[selected] = item;
+        return next;
+      });
+      return;
+    }
     setBusy(true);
     try {
       const res = await fetch('/api/export', {
@@ -115,7 +139,7 @@ export default function Page() {
     } finally {
       setBusy(false);
     }
-  }, [selectedItem]);
+  }, [selected, selectedItem, validateClient, setItems]);
 
   const dropText = useMemo(() => {
     if (busy) return '処理中...';
@@ -171,6 +195,7 @@ export default function Page() {
                   <input
                     className="input"
                     value={selectedItem.data.reporterName}
+                    placeholder="入力してください"
                     onChange={(e) => update({ reporterName: e.target.value })}
                   />
                 </Field>
@@ -210,6 +235,9 @@ export default function Page() {
                       update({ productType: e.target.value as InvoiceData['productType'] })
                     }
                   >
+                    <option value="" disabled>
+                      選択してください
+                    </option>
                     <option value="直貿">直貿</option>
                     <option value="間貿">間貿</option>
                   </select>
@@ -241,6 +269,7 @@ export default function Page() {
                   <input
                     className="input w-52"
                     value={selectedItem.data.originCountry}
+                    placeholder="例: USA"
                     onChange={(e) => update({ originCountry: e.target.value })}
                   />
                 </Field>
@@ -248,6 +277,7 @@ export default function Page() {
                   <textarea
                     className="textarea"
                     value={selectedItem.data.shippingPorts}
+                    placeholder="例: SAVANNAH, JACKSONVILLE"
                     onChange={(e) => update({ shippingPorts: e.target.value })}
                     rows={2}
                   />
@@ -256,6 +286,7 @@ export default function Page() {
                   <input
                     className="input w-52"
                     value={selectedItem.data.countryName}
+                    placeholder="例: USA"
                     onChange={(e) => update({ countryName: e.target.value })}
                   />
                 </Field>
