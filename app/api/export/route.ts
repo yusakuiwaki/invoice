@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import ExcelJS from 'exceljs';
+import path from 'path';
 
 export const runtime = 'nodejs';
 
@@ -27,45 +28,56 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing JSON data' }, { status: 400 });
     }
 
+    // Load fixed Excel template
+    const templatePath = path.join(
+      process.cwd(),
+      'template',
+      '外国送金に関わる報告書テンプレート.xlsx'
+    );
+
     const wb = new ExcelJS.Workbook();
-    const ws = wb.addWorksheet('報告書');
+    await wb.xlsx.readFile(templatePath);
+    const ws = wb.worksheets[0];
 
-    ws.columns = [
-      { header: '項目', key: 'label', width: 40 },
-      { header: '値', key: 'value', width: 80 },
-    ];
+    // Helper to safely set cell value (if range is merged, writing to the first cell is sufficient)
+    const set = (addr: string, value: string | number | boolean | null | undefined) => {
+      if (value === undefined || value === null) return;
+      if (typeof value === 'string' && value.trim() === '') return; // keep template's initial value
+      ws.getCell(addr).value = value as any;
+    };
 
-    const rows: Array<[string, string]> = [
-      ['報告者氏名', data.reporterName],
-      ['支払金額通貨', data.currency],
-      ['金額', data.amount],
-      ['支払先国', data.payeeCountry],
-      ['支払先（会社名等）', data.payeeName],
-      ['①商品代（a.直貿／b.間貿）', data.productType],
-      ['金額（①商品代）', data.productAmount],
-      ['人事グループへの確認（源泉所得税）', String(data.withholdingTaxConfirmed)],
-      ['輸入貨物名称', data.goodsDescription],
-      ['原産地', data.originCountry],
-      ['船積地', data.shippingPorts],
-      ['国名', data.countryName],
-      ['北朝鮮/イラン関連ではない', String(data.notNKIran)],
-      ['制裁対象との取引ではない', String(data.notSanctioned)],
-    ];
+    // Map fields to template cells
+    // Note: The provided notation like "MNOPQR:5" is interpreted as the first column of that span on the row.
+    // If the template has merged cells for these ranges, writing to the first cell fills the merged area.
+    set('M5', data.reporterName); // reporterName: MNOPQR:5 → M5
 
-    for (const [label, value] of rows) {
-      ws.addRow({ label, value });
-    }
-    ws.getRow(1).font = { bold: true };
-    ws.getColumn(1).alignment = { vertical: 'top' };
-    ws.getColumn(2).alignment = { vertical: 'top' };
-    ws.eachRow({ includeEmpty: false }, (row) => {
-      row.border = {
-        top: { style: 'thin' },
-        left: { style: 'thin' },
-        bottom: { style: 'thin' },
-        right: { style: 'thin' },
-      };
-    });
+    // currency: DE7:DF7 → interpret as D7-F7 range, write to D7 (left-most)
+    set('D7', data.currency);
+
+    // amount: GHIJKLMNO:7 → G7
+    set('G7', data.amount);
+
+    // payeeCountry: CDEF:8 → C8
+    set('C8', data.payeeCountry);
+
+    // payeeName: JKLMNOPQR:8 → J8
+    set('J8', data.payeeName);
+
+    // productAmount: OP:9 → O9 (left aligned)
+    set('O9', data.productAmount);
+    ws.getCell('O9').alignment = { horizontal: 'left' };
+
+    // goodsDescription: FGHIJKLMNOP:23 → F23
+    set('F23', data.goodsDescription);
+
+    // originCountry: FGHIJKLMNOP:25 → F25
+    set('F25', data.originCountry);
+
+    // shippingPorts: EFGH:28 → E28
+    set('E28', data.shippingPorts);
+
+    // countryName: OP28 → O28
+    set('O28', data.countryName);
 
     const buffer = await wb.xlsx.writeBuffer();
     const fileName = `report_${Date.now()}.xlsx`;
@@ -81,4 +93,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Failed to generate Excel' }, { status: 500 });
   }
 }
-
