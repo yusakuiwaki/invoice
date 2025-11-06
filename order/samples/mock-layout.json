@@ -1,0 +1,38 @@
+{
+  "tables": [
+    {
+      "rowCount": 4,
+      "columnCount": 6,
+      "cells": [
+        { "rowIndex": 0, "columnIndex": 0, "content": "Product Code" },
+        { "rowIndex": 0, "columnIndex": 1, "content": "Product Name" },
+        { "rowIndex": 0, "columnIndex": 2, "content": "Qty" },
+        { "rowIndex": 0, "columnIndex": 3, "content": "Unit" },
+        { "rowIndex": 0, "columnIndex": 4, "content": "Unit Price" },
+        { "rowIndex": 0, "columnIndex": 5, "content": "Amount" },
+
+        { "rowIndex": 1, "columnIndex": 0, "content": "W-100" },
+        { "rowIndex": 1, "columnIndex": 1, "content": "Widget A" },
+        { "rowIndex": 1, "columnIndex": 2, "content": "10" },
+        { "rowIndex": 1, "columnIndex": 3, "content": "PCS" },
+        { "rowIndex": 1, "columnIndex": 4, "content": "15.00" },
+        { "rowIndex": 1, "columnIndex": 5, "content": "150.00" },
+
+        { "rowIndex": 2, "columnIndex": 0, "content": "W-200" },
+        { "rowIndex": 2, "columnIndex": 1, "content": "Widget B" },
+        { "rowIndex": 2, "columnIndex": 2, "content": "5" },
+        { "rowIndex": 2, "columnIndex": 3, "content": "PCS" },
+        { "rowIndex": 2, "columnIndex": 4, "content": "30.00" },
+        { "rowIndex": 2, "columnIndex": 5, "content": "150.00" },
+
+        { "rowIndex": 3, "columnIndex": 0, "content": "W-300" },
+        { "rowIndex": 3, "columnIndex": 1, "content": "Widget C" },
+        { "rowIndex": 3, "columnIndex": 2, "content": "3" },
+        { "rowIndex": 3, "columnIndex": 3, "content": "PCS" },
+        { "rowIndex": 3, "columnIndex": 4, "content": "50.00" },
+        { "rowIndex": 3, "columnIndex": 5, "content": "150.00" }
+      ]
+    }
+  ]
+}
+

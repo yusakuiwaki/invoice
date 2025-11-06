@@ -1,0 +1,17 @@
+{
+  "keyValuePairs": [
+    { "key": { "content": "PO No." }, "value": { "content": "PO-2024-00123" } },
+    { "key": { "content": "Order Date" }, "value": { "content": "2024-10-25" } },
+    { "key": { "content": "Delivery Date" }, "value": { "content": "2024-11-10" } },
+    { "key": { "content": "Customer" }, "value": { "content": "ACME Corp." } },
+    { "key": { "content": "Ship To" }, "value": { "content": "ACME Tokyo Warehouse" } },
+    { "key": { "content": "Bill To" }, "value": { "content": "ACME Accounting" } },
+    { "key": { "content": "Attn" }, "value": { "content": "John Doe" } },
+    { "key": { "content": "Phone" }, "value": { "content": "+81-3-1234-5678" } },
+    { "key": { "content": "Supplier" }, "value": { "content": "Widgets Inc." } },
+    { "key": { "content": "Address" }, "value": { "content": "1-2-3 Chiyoda, Tokyo" } },
+    { "key": { "content": "Currency" }, "value": { "content": "USD" } },
+    { "key": { "content": "Purchase Order Type" }, "value": { "content": "Standard" } }
+  ]
+}
+
