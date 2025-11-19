@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react';
 import type { ExtractedItem, ImportResponse, InvoiceData } from './types';
+import { getAutofillForGoodsDescription } from './lib/judgment';
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -41,7 +42,14 @@ export default function Page() {
       const res = await fetch('/api/import', { method: 'POST', body: form });
       if (!res.ok) throw new Error(await res.text());
       const data = (await res.json()) as ImportResponse;
-      setItems(data.items);
+      // 取り込み直後に輸入貨物名称を基に補完（Azure DIの返却表示相当）
+      const hydrated = data.items.map((it) => {
+        const fill = getAutofillForGoodsDescription(it.data.goodsDescription);
+        if (!fill) return it;
+        const nextData: InvoiceData = { ...it.data, ...fill };
+        return { ...it, data: nextData };
+      });
+      setItems(hydrated);
       setSelected(0);
     } catch (e) {
       alert('インポートに失敗しました');
@@ -93,7 +101,15 @@ export default function Page() {
       setItems((prev) => {
         const next = [...prev];
         const item = { ...next[selected] };
-        item.data = { ...item.data, ...patch };
+        // ユーザーが輸入貨物名称を編集したタイミングで判断リストから自動補完
+        const merged = { ...item.data, ...patch } as InvoiceData;
+        if (Object.prototype.hasOwnProperty.call(patch, 'goodsDescription')) {
+          const fill = getAutofillForGoodsDescription(merged.goodsDescription);
+          if (fill) {
+            Object.assign(merged, fill);
+          }
+        }
+        item.data = merged;
         item.errors = validateClient(item.data);
         next[selected] = item;
         return next;

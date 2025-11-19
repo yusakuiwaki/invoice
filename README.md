@@ -166,3 +166,47 @@ curl -X POST http://localhost:3000/api/export \
 
 ---
 本モックは動作イメージの共有が目的です。要件確定後に実テンプレや運用フローへ合わせて精緻化してください。
+
+## 判断リストによる自動補完（品目名 → 関連項目）
+輸入貨物名称に判断リストの「品目名」が含まれていた場合、以下の項目を自動補完します。
+
+- 対象項目: 支払先国、支払先（会社名等）、原産地、船積地（都市名→カンマ区切り）、船積地（国名）
+- 発火タイミング:
+  - `/api/import` の返却を画面に表示する直後（Azure Document Intelligence の返却表示相当）
+  - 画面で「輸入貨物名称」をユーザーが編集したとき
+- 実装箇所:
+  - 判断リストとロジック: `app/lib/judgment.ts`
+  - 画面適用（import 直後/入力時）: `app/page.tsx`（`getAutofillForGoodsDescription` を使用）
+
+### 判断リスト（品目名 → 補完値）
+| 品目名          | 支払先国 | 支払先（会社名等）       | 原産地   | 船積地（都市名） | 船積地（国名） |
+|-----------------|----------|--------------------------|----------|------------------|----------------|
+| AMELIANIER-F    | USA      | RAYONIER                 | USA      | JACKSONVILLE     | USA            |
+| PLACETATE-F     | USA      | RAYONIER                 | USA      | JACKSONVILLE     | USA            |
+| ACETANIER-F-LV  | USA      | RAYONIER                 | USA      | SAVANNAH         | USA            |
+| CELLUNIER-F     | USA      | RAYONIER                 | USA      | SAVANNAH         | USA            |
+| ETHENIER-F      | USA      | RAYONIER                 | USA      | SAVANNAH         | USA            |
+| RAYACETA-HJ     | USA      | RAYONIER                 | USA      | SAVANNAH         | USA            |
+| RAYACETA-HJ 11S | USA      | RAYONIER                 | USA      | SAVANNAH         | USA            |
+| SULFATATE-HJ    | USA      | RAYONIER                 | USA      | SAVANNAH         | USA            |
+| SUPER ACETA     | ノルウェー | BORREGAARD              | NORWAY   | ROTTERDAM        | NETHERLANDS    |
+| Blue Bear MV    | ノルウェー | BORREGAARD              | NORWAY   | ROTTERDAM        | NETHERLANDS    |
+| LV-U            | ノルウェー | BORREGAARD              | NORWAY   | ROTTERDAM        | NETHERLANDS    |
+| Ultra Aceta     | ノルウェー | BORREGAARD              | NORWAY   | OSLO             | NORWAY         |
+| IARY            | 日本     | 三井物産パッケージング    | USA      | LOS ANGELES      | USA            |
+| 225HL-M         | 日本     | 三井物産パッケージング    | USA      | LOS ANGELES      | USA            |
+| HVE             | 日本     | 三井物産パッケージング    | USA      | LOS ANGELES      | USA            |
+| AC1600          | 日本     | 東工ユーセン              | CHINA    | QINGDAO          | CHINA          |
+| CP9125          | 日本     | 東工ユーセン              | CHINA    | QINGDAO          | CHINA          |
+| PCS2400         | 日本     | 東工ユーセン              | CHINA    | QINGDAO          | CHINA          |
+| DIAMOND         | 日本     | 丸紅                      | THAILAND | BANGKOK          | THAILAND       |
+| BAHIA ACE       | 日本     | 丸紅                      | BRAZIL   | SALVADOR         | BRAZIL         |
+
+### 実装ロジック（簡易）
+- `goodsDescription`（輸入貨物名称）に対し、品目名を大小無視の部分一致で走査。
+- 一致が1件以上ある場合:
+  - 最初に一致した品目の「支払先国」「支払先（会社名等）」「原産地」「船積地（国名）」で補完。
+  - 「船積地（都市名）」は一致した全品目の都市名をユニーク化し、カンマ区切りで結合して補完。
+- 入力時の注意:
+  - 上記の補完は「輸入貨物名称」を変更したタイミングでのみ実行し、他フィールドの手入力は上書きしません。
+  - 複数品目が同時に含まれるケースの厳密な整合は本モックの範囲外（代表一致を採用）。
